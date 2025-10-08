@@ -40,7 +40,7 @@ We test three different models:
   * RMSE: $50,622.28
   * Handles yearly patterns
 * **Prophet** (Facebook's modern forecasting tool)
-  * RMSE: $5,897.63 Best Performance
+  * RMSE: $5,813.86 Best Performance
   * Great with holidays and seasons
 
 ## Future Predictions
