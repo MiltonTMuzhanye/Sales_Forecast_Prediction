@@ -33,13 +33,13 @@ We use Walmart's sales data with information about:
 ### 3 Sales Forecasting
 We test three different models:
 
-* **ARIMA** - Traditional time series model
+* **ARIMA** (Traditional time series model)
   * RMSE: $7,474.87
   * Good for basic patterns
-* **SARIMA** - Advanced version that understands seasons
+* **SARIMA** (Advanced version that understands seasons)
   * RMSE: $50,622.28
   * Handles yearly patterns
-* **Prophet** - Facebook's modern forecasting tool
+* **Prophet** (Facebook's modern forecasting tool)
   * RMSE: $5,897.63 Best Performance
   * Great with holidays and seasons
 
@@ -48,10 +48,11 @@ The model can predict sales 12 weeks into the future with confidence intervals.
 
 ## Key Results
 ## Model Performance
-Model	RMSE	MAE	MAPE
-ARIMA	$7,475	$6,642	-
-SARIMA	$50,622	$50,157	-
-Prophet	$5,898	$3,868	Best
+|Model |	RMSE |	MAE |	MAPE |
+|---------|---------|---------|---------|
+|ARIMA |	$7,474.87 |	$6,642.21 |	37.75% |
+|SARIMA |	$50,622.28 |	$50,156.57 |	276.45% |
+|Prophet |	$5,813.86|	$3,746.15 |	21.02% |
 
 ## Business Insights
 
