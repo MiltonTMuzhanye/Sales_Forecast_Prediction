@@ -56,20 +56,20 @@ Prophet	$5,898	$3,868	Best
 ## Business Insights
 
 * **Sales Performance**
- * Total sales: $6.7 billion
- * Best week: $80.9 million in sales
- * Average week: $47.1 million in sales
+  * Total sales: $6.7 billion
+  * Best week: $80.9 million in sales
+  * Average week: $47.1 million in sales
 * **Store Types**
- * Type A stores perform best ($20,100 weekly average)
- * Type B: $12,237 weekly average
- * Type C: $9,520 weekly average
+  * Type A stores perform best ($20,100 weekly average)
+  * Type B: $12,237 weekly average
+  * Type C: $9,520 weekly average
 * **Key Patterns**
- * Holidays boost sales by 7.1%
- * December is the best month for sales ($19,356 average)
- * January is the slowest month ($14,126 average)
+  * Holidays boost sales by 7.1%
+  * December is the best month for sales ($19,356 average)
+  * January is the slowest month ($14,126 average)
 * **What Affects Sales**
- * Economic factors like fuel prices and unemployment have very little impact on sales
- * Time patterns (holidays, seasons) are much better predictors
+  * Economic factors like fuel prices and unemployment have very little impact on sales
+  * Time patterns (holidays, seasons) are much better predictors
 * **Best Forecasting Model**
- * Prophet model performed best being 21% more accurate than other models
- * Can reliably predict sales up to 12 weeks into the future
+  * Prophet model performed best being 21% more accurate than other models
+  * Can reliably predict sales up to 12 weeks into the future
