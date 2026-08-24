@@ -1,0 +1,54 @@
+models:
+  prophet:
+    yearly_seasonality: true
+    weekly_seasonality: true
+    daily_seasonality: false
+    seasonality_mode: additive
+    changepoint_prior_scale: 0.05
+    holidays_prior_scale: 10.0
+    seasonality_prior_scale: 10.0
+    uncertainty_samples: 1000
+    
+  arima:
+    order: [1, 1, 1]
+    
+  sarima:
+    order: [1, 1, 1]
+    seasonal_order: [1, 1, 1, 12]
+    
+  xgboost:
+    n_estimators: 200
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    
+  lightgbm:
+    n_estimators: 200
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    
+  ensemble:
+    weights:
+      prophet: 0.5
+      xgboost: 0.3
+      lightgbm: 0.2
+
+training:
+  periods: 12
+  freq: W
+  cross_validation:
+    horizon: 12
+    period: 4
+    initial: 52
+
+evaluation:
+  metrics:
+    - rmse
+    - mae
+    - mape
+  threshold:
+    mape_max: 0.25
+    rmse_max: 10000

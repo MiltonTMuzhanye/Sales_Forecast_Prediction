@@ -1,0 +1,52 @@
+data:
+  date_column: Date
+  target_column: Weekly_Sales
+  store_column: Store
+  dept_column: Dept
+  
+  numerical_features:
+    - Temperature
+    - Fuel_Price
+    - CPI
+    - Unemployment
+    - Size
+    
+  markdown_features:
+    - MarkDown1
+    - MarkDown2
+    - MarkDown3
+    - MarkDown4
+    - MarkDown5
+    
+  categorical_features:
+    - Type
+    
+  holiday_column: IsHoliday
+  time_features:
+    - Year
+    - Month
+    - Week
+    - Day
+
+preprocessing:
+  handle_missing:
+    markdown: 0
+    method: ffill
+    
+  date_features:
+    - Year
+    - Month
+    - Week
+    - Day
+    - DayOfWeek
+    - Quarter
+    
+  aggregation:
+    level: store_dept
+    frequency: W
+
+stores:
+  types:
+    A: Large
+    B: Medium
+    C: Small

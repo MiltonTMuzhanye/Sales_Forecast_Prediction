@@ -1,0 +1,32 @@
+project:
+  name: sales-forecast-system
+  version: 1.0.0
+  environment: development
+
+data:
+  raw_path: data/raw/
+  processed_path: data/processed/
+  external_path: data/external/
+  train_file: train.csv
+  stores_file: stores.csv
+  features_file: features.csv
+
+artifacts:
+  models_path: artifacts/trained_models/
+  encoders_path: artifacts/encoders/
+  scalers_path: artifacts/scalers/
+  features_path: artifacts/feature_lists/
+  thresholds_path: artifacts/thresholds/
+
+mlflow:
+  tracking_uri: mlflow/
+  experiment_name: sales_forecast
+
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: logs/app.log
+
+seed: 42
+test_size: 0.2
+validation_size: 0.2
