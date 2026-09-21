@@ -7,9 +7,9 @@ import json
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.sales_forecasting.utils.config import Config
-from src.sales_forecasting.utils.logger import setup_logger
-from src.sales_forecasting.pipelines.forecasting_pipeline import ForecastingPipeline
+from src.sales_forecast_system.utils.config import Config
+from src.sales_forecast_system.utils.logger import setup_logger
+from src.sales_forecast_system.pipelines.forecasting_pipeline import ForecastingPipeline
 
 logger = setup_logger(__name__)
 

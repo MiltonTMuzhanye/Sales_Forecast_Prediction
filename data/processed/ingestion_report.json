@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-21T02:17:35.635301",
+  "timestamp": "2026-09-21T22:02:43.134767",
   "files_loaded": {
     "train": 421570,
     "stores": 45,
@@ -45,7 +45,7 @@
   },
   "validation": {
     "status": "passed",
-    "timestamp": "2026-09-21T02:17:35.948510"
+    "timestamp": "2026-09-21T22:02:43.359996"
   },
   "validation_details": {
     "train_duplicates": "415135",
@@ -78,7 +78,7 @@
     }
   },
   "backup": {
-    "path": "data/raw/backup/20260921_021735",
-    "timestamp": "2026-09-21T02:17:36.006086"
+    "path": "data/raw/backup/20260921_220243",
+    "timestamp": "2026-09-21T22:02:43.618773"
   }
 }

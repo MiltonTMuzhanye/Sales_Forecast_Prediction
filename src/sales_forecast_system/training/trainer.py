@@ -75,76 +75,269 @@ class ModelTrainer:
             'test_data': test_data
         }
     
-    def train_xgboost(self, data: pd.DataFrame, store_id: int, dept_id: int) -> Dict:
-        """Train XGBoost model"""
-        logger.info(f"Training XGBoost for Store {store_id}, Dept {dept_id}")
-        
-        # Filter data
-        store_dept_data = data[(data['Store'] == store_id) & (data['Dept'] == dept_id)].copy()
-        store_dept_data = store_dept_data.sort_values('Date')
-        
-        # Feature engineering
-        store_dept_data = self.feature_engineer.engineer_all_features(store_dept_data)
-        
-        # Split data
+    def _recursive_forecast_tree_model(
+        self,
+        model,
+        history: pd.DataFrame,
+        future: pd.DataFrame
+    ) -> np.ndarray:
+        """
+        Recursively forecast future observations for a tree-based model.
+
+        Each prediction is appended to the historical target series before
+        the next forecast row is constructed. This prevents actual future
+        target values from entering lag or rolling features.
+        """
+        logger.info(
+            "Starting recursive forecasting for %s future periods.",
+            len(future)
+        )
+
+        history = history.copy()
+        future = future.copy()
+
+        history[self.feature_engineer.date_col] = pd.to_datetime(
+            history[self.feature_engineer.date_col]
+        )
+        future[self.feature_engineer.date_col] = pd.to_datetime(
+            future[self.feature_engineer.date_col]
+        )
+
+        history = (
+            history
+            .sort_values(self.feature_engineer.date_col)
+            .reset_index(drop=True)
+        )
+
+        future = (
+            future
+            .sort_values(self.feature_engineer.date_col)
+            .reset_index(drop=True)
+        )
+
+        predictions = []
+
+        for _, future_row in future.iterrows():
+            future_row_df = pd.DataFrame(
+                [future_row.to_dict()]
+            )
+
+            # The future target is unknown. Remove it before feature
+            # construction so it cannot become a model input.
+            future_row_df[self.feature_engineer.target_col] = np.nan
+
+            combined = pd.concat(
+                [history, future_row_df],
+                ignore_index=True,
+                sort=False
+            )
+
+            engineered = self.feature_engineer.engineer_all_features(
+                combined,
+                include_target_history=True
+            )
+
+            current_features = engineered.iloc[[-1]].copy()
+
+            prediction = float(
+                model.predict(current_features)[0]
+            )
+
+            predictions.append(prediction)
+
+            # Add the prediction to the historical target series.
+            # This prediction becomes available history for the next
+            # recursive forecasting step.
+            future_row_with_prediction = future_row.copy()
+            future_row_with_prediction[
+                self.feature_engineer.target_col
+            ] = prediction
+
+            history = pd.concat(
+                [
+                    history,
+                    pd.DataFrame(
+                        [future_row_with_prediction.to_dict()]
+                    )
+                ],
+                ignore_index=True,
+                sort=False
+            )
+
+        logger.info(
+            "Recursive forecasting completed: %d predictions.",
+            len(predictions)
+        )
+
+        return np.asarray(predictions)
+
+
+    def train_xgboost(
+        self,
+        data: pd.DataFrame,
+        store_id: int,
+        dept_id: int
+    ) -> Dict:
+        """Train and recursively evaluate XGBoost."""
+
+        logger.info(
+            f"Training XGBoost for Store {store_id}, Dept {dept_id}"
+        )
+
+        store_dept_data = data[
+            (data['Store'] == store_id) &
+            (data['Dept'] == dept_id)
+        ].copy()
+
+        store_dept_data = (
+            store_dept_data
+            .sort_values('Date')
+            .reset_index(drop=True)
+        )
+
         train_size = int(len(store_dept_data) * 0.8)
-        train_data = store_dept_data.iloc[:train_size]
-        test_data = store_dept_data.iloc[train_size:]
-        
-        # Train model
+
+        train_raw = store_dept_data.iloc[:train_size].copy()
+        test_data = store_dept_data.iloc[train_size:].copy()
+
+        logger.info(
+            "XGBoost chronological split: "
+            f"train={len(train_raw)}, test={len(test_data)}"
+        )
+
+        # Create target-history features using training history only.
+        train_features = self.feature_engineer.engineer_all_features(
+            train_raw,
+            include_target_history=True
+        )
+
+        # Rows before the maximum required lag cannot contain a complete
+        # set of lag features. Remove them from model training only.
+        lag_columns = [
+            f"lag_{lag}"
+            for lag in self.feature_engineer.lags
+        ]
+
+        train_features = train_features.dropna(
+            subset=lag_columns
+        ).reset_index(drop=True)
+
+        if train_features.empty:
+            raise ValueError(
+                "No usable XGBoost training rows remain after "
+                "lag-feature preparation."
+            )
+
+        logger.info(
+            "XGBoost usable training rows after lag filtering: %d",
+            len(train_features)
+        )
+
         model = XGBoostModel(self.config)
-        model.train(train_data)
-        
-        # Predict
-        y_pred = model.predict(test_data)
-        y_true = test_data['Weekly_Sales'].values
-        
-        # Evaluate
+        model.train(train_features)
+
+        # Recursive forecasting starts from the complete raw training
+        # history, not the lag-filtered training dataframe.
+        y_pred = self._recursive_forecast_tree_model(
+            model=model,
+            history=train_raw,
+            future=test_data
+        )
+
+        y_true = test_data['Weekly_Sales'].to_numpy()
+
         metrics = model.evaluate(y_true, y_pred)
-        
+
         return {
             'model': model,
             'predictions': y_pred,
             'metrics': metrics,
-            'train_data': train_data,
+            'train_data': train_raw,
             'test_data': test_data
         }
-    
-    def train_lightgbm(self, data: pd.DataFrame, store_id: int, dept_id: int) -> Dict:
-        """Train LightGBM model"""
-        logger.info(f"Training LightGBM for Store {store_id}, Dept {dept_id}")
-        
-        # Filter data
-        store_dept_data = data[(data['Store'] == store_id) & (data['Dept'] == dept_id)].copy()
-        store_dept_data = store_dept_data.sort_values('Date')
-        
-        # Feature engineering
-        store_dept_data = self.feature_engineer.engineer_all_features(store_dept_data)
-        
-        # Split data
+
+    def train_lightgbm(
+        self,
+        data: pd.DataFrame,
+        store_id: int,
+        dept_id: int
+    ) -> Dict:
+        """Train and recursively evaluate LightGBM."""
+
+        logger.info(
+            f"Training LightGBM for Store {store_id}, Dept {dept_id}"
+        )
+
+        store_dept_data = data[
+            (data['Store'] == store_id) &
+            (data['Dept'] == dept_id)
+        ].copy()
+
+        store_dept_data = (
+            store_dept_data
+            .sort_values('Date')
+            .reset_index(drop=True)
+        )
+
         train_size = int(len(store_dept_data) * 0.8)
-        train_data = store_dept_data.iloc[:train_size]
-        test_data = store_dept_data.iloc[train_size:]
-        
-        # Train model
+
+        train_raw = store_dept_data.iloc[:train_size].copy()
+        test_data = store_dept_data.iloc[train_size:].copy()
+
+        logger.info(
+            "LightGBM chronological split: "
+            f"train={len(train_raw)}, test={len(test_data)}"
+        )
+
+        # Create target-history features using training history only.
+        train_features = self.feature_engineer.engineer_all_features(
+            train_raw,
+            include_target_history=True
+        )
+
+        lag_columns = [
+            f"lag_{lag}"
+            for lag in self.feature_engineer.lags
+        ]
+
+        train_features = train_features.dropna(
+            subset=lag_columns
+        ).reset_index(drop=True)
+
+        if train_features.empty:
+            raise ValueError(
+                "No usable LightGBM training rows remain after "
+                "lag-feature preparation."
+            )
+
+        logger.info(
+            "LightGBM usable training rows after lag filtering: %d",
+            len(train_features)
+        )
+
         model = LightGBMModel(self.config)
-        model.train(train_data)
-        
-        # Predict
-        y_pred = model.predict(test_data)
-        y_true = test_data['Weekly_Sales'].values
-        
-        # Evaluate
+        model.train(train_features)
+
+        # Forecast recursively so each prediction becomes available
+        # history for the next forecasting step.
+        y_pred = self._recursive_forecast_tree_model(
+            model=model,
+            history=train_raw,
+            future=test_data
+        )
+
+        y_true = test_data['Weekly_Sales'].to_numpy()
+
         metrics = model.evaluate(y_true, y_pred)
-        
+
         return {
             'model': model,
             'predictions': y_pred,
             'metrics': metrics,
-            'train_data': train_data,
+            'train_data': train_raw,
             'test_data': test_data
         }
-    
+
     def train_all_models(self, data: pd.DataFrame, store_id: int, dept_id: int) -> Dict:
         """Train all models"""
         logger.info(f"Training all models for Store {store_id}, Dept {dept_id}")

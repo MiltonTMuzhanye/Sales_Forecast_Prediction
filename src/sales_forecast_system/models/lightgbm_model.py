@@ -89,46 +89,29 @@ class LightGBMModel:
         target_col: Optional[str] = None,
         **kwargs,
     ) -> None:
-        """Train LightGBM using a chronological train/test split."""
+        """Train LightGBM on the supplied training data."""
 
         logger.info("Training LightGBM model...")
 
         try:
-            if not 0 < test_size < 1:
-                raise ValueError(
-                    "test_size must be between 0 and 1."
-                )
-
             X, y = self.prepare_data(
                 df,
                 target_col=target_col
             )
 
-            split_index = int(len(X) * (1 - test_size))
-
-            if split_index <= 0 or split_index >= len(X):
-                raise ValueError(
-                    f"Invalid chronological split for {len(X)} rows "
-                    f"and test_size={test_size}."
-                )
-
-            X_train = X.iloc[:split_index]
-            X_test = X.iloc[split_index:]
-            y_train = y[:split_index]
-            y_test = y[split_index:]
+            if len(X) < 1:
+                raise ValueError("Training data is empty.")
 
             logger.info(
-                f"Chronological split: "
-                f"{len(X_train)} training rows, "
-                f"{len(X_test)} validation rows"
+                f"Training LightGBM on {len(X)} rows "
+                f"and {len(X.columns)} features"
             )
 
             self.model = self.build_model(**kwargs)
 
             self.model.fit(
-                X_train,
-                y_train,
-                eval_set=[(X_test, y_test)],
+                X,
+                y,
             )
 
             logger.info("LightGBM model trained successfully")

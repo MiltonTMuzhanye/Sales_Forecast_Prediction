@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-21T02:17:35.635301",
+  "timestamp": "2026-09-21T22:02:43.134767",
   "files_loaded": {
     "train": 421570,
     "stores": 45,
@@ -45,7 +45,7 @@
   },
   "validation": {
     "status": "passed",
-    "timestamp": "2026-09-21T02:17:35.948510"
+    "timestamp": "2026-09-21T22:02:43.359996"
   },
   "validation_details": {
     "train_duplicates": "415135",
@@ -78,11 +78,11 @@
     }
   },
   "backup": {
-    "path": "data/raw/backup/20260921_021735",
-    "timestamp": "2026-09-21T02:17:36.006086"
+    "path": "data/raw/backup/20260921_220243",
+    "timestamp": "2026-09-21T22:02:43.618773"
   },
   "summary": {
-    "ingestion_timestamp": "2026-09-21T02:17:37.991999",
+    "ingestion_timestamp": "2026-09-21T22:02:45.845682",
     "files": {
       "train": {
         "rows": 421570,
@@ -205,6 +205,6 @@
       "features contains missing values"
     ]
   },
-  "duration_seconds": 2.920607,
+  "duration_seconds": 3.373985,
   "status": "completed"
 }

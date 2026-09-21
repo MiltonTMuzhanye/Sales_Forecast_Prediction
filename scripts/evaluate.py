@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.sales_forecasting.utils.config import Config
-from src.sales_forecasting.utils.logger import setup_logger
-from src.sales_forecasting.evaluation.metrics import ModelEvaluator
+from src.sales_forecast_system.utils.config import Config
+from src.sales_forecast_system.utils.logger import setup_logger
+from src.sales_forecast_system.evaluation.metrics import ModelEvaluator
 
 logger = setup_logger(__name__)
 

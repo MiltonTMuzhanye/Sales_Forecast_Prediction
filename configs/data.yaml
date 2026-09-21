@@ -1,38 +1,38 @@
-data:
-  date_column: Date
-  target_column: Weekly_Sales
-  store_column: Store
-  dept_column: Dept
-  
-  numerical_features:
-    - Temperature
-    - Fuel_Price
-    - CPI
-    - Unemployment
-    - Size
-    
-  markdown_features:
-    - MarkDown1
-    - MarkDown2
-    - MarkDown3
-    - MarkDown4
-    - MarkDown5
-    
-  categorical_features:
-    - Type
-    
-  holiday_column: IsHoliday
-  time_features:
-    - Year
-    - Month
-    - Week
-    - Day
+date_column: Date
+target_column: Weekly_Sales
+store_column: Store
+dept_column: Dept
+
+numerical_features:
+  - Temperature
+  - Fuel_Price
+  - CPI
+  - Unemployment
+  - Size
+
+markdown_features:
+  - MarkDown1
+  - MarkDown2
+  - MarkDown3
+  - MarkDown4
+  - MarkDown5
+
+categorical_features:
+  - Type
+
+holiday_column: IsHoliday
+
+time_features:
+  - Year
+  - Month
+  - Week
+  - Day
 
 preprocessing:
   handle_missing:
     markdown: 0
     method: ffill
-    
+
   date_features:
     - Year
     - Month
@@ -40,10 +40,39 @@ preprocessing:
     - Day
     - DayOfWeek
     - Quarter
-    
+
   aggregation:
     level: store_dept
     frequency: W
+
+features:
+  lags:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 8
+    - 12
+    - 26
+    - 52
+
+  rolling_windows:
+    - 4
+    - 8
+    - 12
+    - 26
+    - 52
+
+  rolling_stats:
+    - mean
+    - std
+    - min
+    - max
+    - median
+
+  group_columns:
+    - Store
+    - Dept
 
 stores:
   types:
