@@ -6,9 +6,9 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.sales_forecasting.utils.config import Config
-from src.sales_forecasting.utils.logger import setup_logger
-from src.sales_forecasting.pipelines.training_pipeline import TrainingPipeline
+from src.sales_forecast_system.utils.config import Config
+from src.sales_forecast_system.utils.logger import setup_logger
+from src.sales_forecast_system.pipelines.training_pipeline import TrainingPipeline
 
 logger = setup_logger(__name__)
 

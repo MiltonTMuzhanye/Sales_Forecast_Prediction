@@ -162,89 +162,34 @@ class ModelTrainer:
         
         # Train Hybrid
         try:
-            store_dept_data = data[
-                (data['Store'] == store_id) &
-                (data['Dept'] == dept_id)
-            ].copy()
-
-            # Ensure chronological ordering for time-series forecasting.
-            store_dept_data = store_dept_data.sort_values('Date').reset_index(drop=True)
-
-            # Use the same chronological 80/20 split as the other models.
-            train_size = int(len(store_dept_data) * 0.8)
-
-            train_data = store_dept_data.iloc[:train_size].copy()
-            test_data = store_dept_data.iloc[train_size:].copy()
-
+            store_dept_data = data[(data['Store'] == store_id) & (data['Dept'] == dept_id)].copy()
+            store_dept_data = store_dept_data.sort_values('Date')
+            
             hybrid = HybridModel(self.config)
-
-            # Train only on historical training data.
-            hybrid.train(train_data)
-
-            # Forecast exactly the length of the held-out test period.
-            y_pred = hybrid.predict(
-                train_data,
-                periods=len(test_data)
-            )
-
-            y_true = test_data['Weekly_Sales'].values
-
+            hybrid.train(store_dept_data)
+            
+            # Predict
+            y_pred = hybrid.predict(store_dept_data, 12)
+            y_true = store_dept_data.tail(12)['Weekly_Sales'].values
+            
             results['hybrid'] = {
                 'model': hybrid,
                 'predictions': y_pred,
-                'metrics': hybrid.evaluate(y_true, y_pred),
-                'train_data': train_data,
-                'test_data': test_data
+                'metrics': hybrid.evaluate(y_true, y_pred)
             }
-
         except Exception as e:
             logger.warning(f"Hybrid model failed: {e}")
         
-        # Compare models using the same chronological test period.
+        # Compare models
         predictions = {}
-
         for name, result in results.items():
-            if 'predictions' not in result:
-                continue
-
-            y_pred = np.asarray(
-                result['predictions']
-            ).flatten()
-
-            predictions[name] = y_pred
-
+            if 'predictions' in result:
+                predictions[name] = result['predictions']
+        
         if 'test_data' in results.get('prophet', {}):
-            y_true = np.asarray(
-                results['prophet']['test_data']['y'].values
-            ).flatten()
-
-            # Only compare models whose predictions have the same
-            # number of observations as the common test set.
-            valid_predictions = {}
-
-            for model_name, y_pred in predictions.items():
-                if len(y_pred) != len(y_true):
-                    logger.warning(
-                        f"Skipping {model_name} from comparison: "
-                        f"prediction length={len(y_pred)}, "
-                        f"expected={len(y_true)}"
-                    )
-                    continue
-
-                valid_predictions[model_name] = y_pred
-
-            if valid_predictions:
-                comparison = self.evaluator.compare_models(
-                    valid_predictions,
-                    y_true
-                )
-
-                results['comparison'] = comparison
-
-                logger.info(
-                    "Model comparison completed:\n%s",
-                    comparison
-                )
+            y_true = results['prophet']['test_data']['y'].values
+            comparison = self.evaluator.compare_models(predictions, y_true)
+            results['comparison'] = comparison
         
         self.results = results
         return results

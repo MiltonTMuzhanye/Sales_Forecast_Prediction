@@ -60,8 +60,8 @@ class DataPreprocessor:
         # Handle CPI and Unemployment - forward fill then backward fill
         for col in ['CPI', 'Unemployment']:
             if col in df_copy.columns:
-                df_copy[col] = df_copy[col].fillna(method='ffill')
-                df_copy[col] = df_copy[col].fillna(method='bfill')
+                df_copy[col] = df_copy[col].ffill()
+                df_copy[col] = df_copy[col].bfill()
         
         logger.info(f"Missing values after handling: {df_copy.isnull().sum().sum()}")
         return df_copy
