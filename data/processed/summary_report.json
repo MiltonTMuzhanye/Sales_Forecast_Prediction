@@ -1,0 +1,124 @@
+{
+  "ingestion_timestamp": "2026-09-21T02:17:37.991999",
+  "files": {
+    "train": {
+      "rows": 421570,
+      "columns": 5,
+      "column_names": [
+        "Store",
+        "Dept",
+        "Date",
+        "Weekly_Sales",
+        "IsHoliday"
+      ]
+    },
+    "stores": {
+      "rows": 45,
+      "columns": 3,
+      "column_names": [
+        "Store",
+        "Type",
+        "Size"
+      ]
+    },
+    "features": {
+      "rows": 8190,
+      "columns": 12,
+      "column_names": [
+        "Store",
+        "Date",
+        "Temperature",
+        "Fuel_Price",
+        "MarkDown1",
+        "MarkDown2",
+        "MarkDown3",
+        "MarkDown4",
+        "MarkDown5",
+        "CPI",
+        "Unemployment",
+        "IsHoliday"
+      ]
+    }
+  },
+  "statistics": {
+    "train": {
+      "Store": {
+        "mean": 22.200545579619043,
+        "std": 12.785297389902988,
+        "min": 1.0,
+        "max": 45.0,
+        "null_count": 0
+      },
+      "Dept": {
+        "mean": 44.26031738501317,
+        "std": 30.492054015785836,
+        "min": 1.0,
+        "max": 99.0,
+        "null_count": 0
+      },
+      "Weekly_Sales": {
+        "mean": 15981.258123467042,
+        "std": 22711.183519163227,
+        "min": -4988.94,
+        "max": 693099.36,
+        "null_count": 0
+      }
+    },
+    "stores": {
+      "Store": {
+        "mean": 23.0,
+        "std": 13.133925536563698,
+        "min": 1.0,
+        "max": 45.0,
+        "null_count": 0
+      },
+      "Size": {
+        "mean": 130287.6,
+        "std": 63825.27199115923,
+        "min": 34875.0,
+        "max": 219622.0,
+        "null_count": 0
+      }
+    },
+    "features": {
+      "Store": {
+        "mean": 23.0,
+        "std": 12.987966099513997,
+        "min": 1.0,
+        "max": 45.0,
+        "null_count": 0
+      },
+      "Temperature": {
+        "mean": 59.356197802197805,
+        "std": 18.67860684890715,
+        "min": -7.29,
+        "max": 101.95,
+        "null_count": 0
+      },
+      "Fuel_Price": {
+        "mean": 3.405991819291819,
+        "std": 0.43133657110071344,
+        "min": 2.472,
+        "max": 4.468,
+        "null_count": 0
+      },
+      "MarkDown1": {
+        "mean": 7032.371785714286,
+        "std": 9262.74744752368,
+        "min": -2781.45,
+        "max": 103184.98,
+        "null_count": 4158
+      },
+      "MarkDown2": {
+        "mean": 3384.1765936323177,
+        "std": 8793.58301550764,
+        "min": -265.76,
+        "max": 104519.54,
+        "null_count": 5269
+      }
+    }
+  },
+  "warnings": [
+    "features contains missing values"
+  ]
+}

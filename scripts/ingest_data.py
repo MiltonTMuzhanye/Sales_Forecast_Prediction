@@ -7,15 +7,16 @@ from datetime import datetime
 import json
 import logging
 import shutil
+from typing import Optional, Dict
 
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.sales_forecasting.utils.config import Config
-from src.sales_forecasting.utils.logger import setup_logger
-from src.sales_forecasting.utils.exceptions import DataIngestionError
-from src.sales_forecasting.data.ingestion import DataIngestion
-from src.sales_forecasting.data.validation import DataValidator
+from src.sales_forecast_system.utils.config import Config
+from src.sales_forecast_system.utils.logger import setup_logger
+from src.sales_forecast_system.utils.exceptions import DataIngestionError
+from src.sales_forecast_system.data.ingestion import DataIngestion
+from src.sales_forecast_system.data.validation import DataValidator
 
 logger = setup_logger(__name__)
 

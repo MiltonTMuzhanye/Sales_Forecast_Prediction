@@ -1,0 +1,45 @@
+2026-09-21 02:17:35,133 - __main__ - INFO - ingest_data.py:249 - ============================================================
+2026-09-21 02:17:35,134 - __main__ - INFO - ingest_data.py:250 - STARTING DATA INGESTION PIPELINE
+2026-09-21 02:17:35,134 - __main__ - INFO - ingest_data.py:251 - ============================================================
+2026-09-21 02:17:35,134 - __main__ - INFO - ingest_data.py:257 - Step 1: Ingesting data...
+2026-09-21 02:17:35,134 - __main__ - INFO - ingest_data.py:49 - Starting data ingestion...
+2026-09-21 02:17:35,134 - src.sales_forecast_system.data.ingestion - INFO - ingestion.py:22 - Loading training data from data/raw/train.csv
+2026-09-21 02:17:35,573 - src.sales_forecast_system.data.ingestion - INFO - ingestion.py:24 - Loaded 421570 rows
+2026-09-21 02:17:35,574 - src.sales_forecast_system.data.ingestion - INFO - ingestion.py:33 - Loading stores data from data/raw/stores.csv
+2026-09-21 02:17:35,595 - src.sales_forecast_system.data.ingestion - INFO - ingestion.py:35 - Loaded 45 rows
+2026-09-21 02:17:35,596 - src.sales_forecast_system.data.ingestion - INFO - ingestion.py:44 - Loading features data from data/raw/features.csv
+2026-09-21 02:17:35,635 - src.sales_forecast_system.data.ingestion - INFO - ingestion.py:46 - Loaded 8190 rows
+2026-09-21 02:17:35,830 - __main__ - INFO - ingest_data.py:86 - Data ingestion completed. Loaded 429805 rows
+2026-09-21 02:17:35,831 - __main__ - INFO - ingest_data.py:261 - Step 2: Validating data...
+2026-09-21 02:17:35,831 - __main__ - INFO - ingest_data.py:96 - Validating ingested data...
+2026-09-21 02:17:35,831 - src.sales_forecast_system.data.validation - INFO - validation.py:80 - Validating train data
+2026-09-21 02:17:35,852 - src.sales_forecast_system.data.validation - WARNING - validation.py:67 - Found 1285 rows with negative sales
+2026-09-21 02:17:35,855 - src.sales_forecast_system.data.validation - WARNING - validation.py:72 - Found 73 rows with zero sales
+2026-09-21 02:17:35,909 - src.sales_forecast_system.data.validation - INFO - validation.py:42 - Date range: 2010-02-05 00:00:00 to 2012-10-26 00:00:00
+2026-09-21 02:17:35,919 - src.sales_forecast_system.data.validation - INFO - validation.py:80 - Validating stores data
+2026-09-21 02:17:35,922 - src.sales_forecast_system.data.validation - INFO - validation.py:80 - Validating features data
+2026-09-21 02:17:35,944 - src.sales_forecast_system.data.validation - INFO - validation.py:42 - Date range: 2010-02-05 00:00:00 to 2013-07-26 00:00:00
+2026-09-21 02:17:35,947 - src.sales_forecast_system.data.validation - WARNING - validation.py:55 - Columns with >50.0% missing values: ['MarkDown1', 'MarkDown2', 'MarkDown3', 'MarkDown4', 'MarkDown5']
+2026-09-21 02:17:35,948 - src.sales_forecast_system.data.validation - INFO - validation.py:99 - All validations passed
+2026-09-21 02:17:35,985 - __main__ - WARNING - ingest_data.py:121 - Found 415135 duplicate rows in train data
+2026-09-21 02:17:35,995 - __main__ - INFO - ingest_data.py:273 - Step 3: Creating backup...
+2026-09-21 02:17:35,995 - __main__ - INFO - ingest_data.py:172 - Creating backup of raw data...
+2026-09-21 02:17:36,004 - __main__ - INFO - ingest_data.py:180 - Backed up train.csv to data/raw/backup/20260921_021735
+2026-09-21 02:17:36,005 - __main__ - INFO - ingest_data.py:180 - Backed up features.csv to data/raw/backup/20260921_021735
+2026-09-21 02:17:36,005 - __main__ - INFO - ingest_data.py:180 - Backed up stores.csv to data/raw/backup/20260921_021735
+2026-09-21 02:17:36,006 - __main__ - INFO - ingest_data.py:277 - Step 4: Saving processed data...
+2026-09-21 02:17:36,006 - __main__ - INFO - ingest_data.py:145 - Saving processed data...
+2026-09-21 02:17:37,352 - __main__ - INFO - ingest_data.py:152 - Saved train data to data/processed/train_processed.csv
+2026-09-21 02:17:37,857 - __main__ - INFO - ingest_data.py:157 - Saved train data to data/processed/train_processed.parquet
+2026-09-21 02:17:37,859 - __main__ - INFO - ingest_data.py:152 - Saved stores data to data/processed/stores_processed.csv
+2026-09-21 02:17:37,861 - __main__ - INFO - ingest_data.py:157 - Saved stores data to data/processed/stores_processed.parquet
+2026-09-21 02:17:37,967 - __main__ - INFO - ingest_data.py:152 - Saved features data to data/processed/features_processed.csv
+2026-09-21 02:17:37,989 - __main__ - INFO - ingest_data.py:157 - Saved features data to data/processed/features_processed.parquet
+2026-09-21 02:17:37,991 - __main__ - INFO - ingest_data.py:163 - Saved ingestion report to data/processed/ingestion_report.json
+2026-09-21 02:17:37,991 - __main__ - INFO - ingest_data.py:281 - Step 5: Generating summary report...
+2026-09-21 02:17:37,991 - __main__ - INFO - ingest_data.py:194 - Generating summary report...
+2026-09-21 02:17:38,054 - __main__ - INFO - ingest_data.py:235 - Summary report saved to data/processed/summary_report.json
+2026-09-21 02:17:38,055 - __main__ - INFO - ingest_data.py:294 - ============================================================
+2026-09-21 02:17:38,056 - __main__ - INFO - ingest_data.py:295 - DATA INGESTION COMPLETED SUCCESSFULLY
+2026-09-21 02:17:38,056 - __main__ - INFO - ingest_data.py:296 - Duration: 2.92 seconds
+2026-09-21 02:17:38,056 - __main__ - INFO - ingest_data.py:297 - ============================================================

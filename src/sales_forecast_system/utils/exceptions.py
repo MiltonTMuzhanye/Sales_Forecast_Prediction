@@ -1,4 +1,4 @@
- class SalesForecastError(Exception):
+class SalesForecastError(Exception):
     """Base exception for sales forecast system"""
     pass
 
