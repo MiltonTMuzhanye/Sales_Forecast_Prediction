@@ -9,7 +9,6 @@ import logging
 import shutil
 from typing import Optional, Dict
 
-# Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from src.sales_forecast_system.utils.config import Config
@@ -32,13 +31,11 @@ class DataIngestor:
         self.raw_path = Path(self.config.get('data.raw_path', 'data/raw/'))
         self.processed_path = Path(self.config.get('data.processed_path', 'data/processed/'))
         self.external_path = Path(self.config.get('data.external_path', 'data/external/'))
-        
-        # Create directories if they don't exist
+
         self.raw_path.mkdir(parents=True, exist_ok=True)
         self.processed_path.mkdir(parents=True, exist_ok=True)
         self.external_path.mkdir(parents=True, exist_ok=True)
-        
-        # Initialize data storage
+
         self.data = {}
         self.ingestion_report = {}
         
@@ -49,10 +46,8 @@ class DataIngestor:
         logger.info("Starting data ingestion...")
         
         try:
-            # Load all data
             self.data = self.ingestion.load_all_data()
-            
-            # Create ingestion report
+
             self.ingestion_report = {
                 'timestamp': datetime.now().isoformat(),
                 'files_loaded': {
@@ -67,8 +62,7 @@ class DataIngestor:
                 },
                 'date_ranges': {}
             }
-            
-            # Get date ranges
+
             if 'Date' in self.data['train'].columns:
                 self.data['train']['Date'] = pd.to_datetime(self.data['train']['Date'])
                 self.ingestion_report['date_ranges']['train'] = {
@@ -99,28 +93,49 @@ class DataIngestor:
             raise ValueError("No data loaded. Run ingest_all() first.")
         
         try:
-            # Run validations
             is_valid = self.validator.validate_all(self.data)
-            
-            # Add validation results to report
+
             self.ingestion_report['validation'] = {
                 'status': 'passed' if is_valid else 'failed',
                 'timestamp': datetime.now().isoformat()
             }
             
-            # Additional validations
             validation_details = {}
-            
-            # Check for duplicates
+
             for name, df in self.data.items():
-                if 'Store' in df.columns and 'Date' in df.columns:
-                    duplicates = df.duplicated(subset=['Store', 'Date']).sum()
-                    validation_details[f'{name}_duplicates'] = duplicates
-                    
+                if name == 'train' and all(
+                    col in df.columns
+                    for col in ['Store', 'Dept', 'Date']
+                ):
+                    duplicate_keys = ['Store', 'Dept', 'Date']
+
+                elif name == 'features' and all(
+                    col in df.columns
+                    for col in ['Store', 'Date']
+                ):
+                    duplicate_keys = ['Store', 'Date']
+
+                elif name == 'stores' and 'Store' in df.columns:
+                    duplicate_keys = ['Store']
+
+                else:
+                    duplicate_keys = None
+
+                if duplicate_keys:
+                    duplicates = df.duplicated(
+                        subset=duplicate_keys
+                    ).sum()
+
+                    validation_details[f'{name}_duplicates'] = int(
+                        duplicates
+                    )
+
                     if duplicates > 0:
-                        logger.warning(f"Found {duplicates} duplicate rows in {name} data")
-            
-            # Check for missing values
+                        logger.warning(
+                            f"Found {duplicates} duplicate rows in "
+                            f"{name} data using keys {duplicate_keys}"
+                        )
+
             for name, df in self.data.items():
                 missing = df.isnull().sum().to_dict()
                 validation_details[f'{name}_missing'] = missing
@@ -146,17 +161,14 @@ class DataIngestor:
         
         try:
             for name, df in self.data.items():
-                # Save as CSV
                 file_path = self.processed_path / f"{name}_processed.csv"
                 df.to_csv(file_path, index=False)
                 logger.info(f"Saved {name} data to {file_path}")
-                
-                # Save as Parquet for better performance
+
                 parquet_path = self.processed_path / f"{name}_processed.parquet"
                 df.to_parquet(parquet_path, index=False)
                 logger.info(f"Saved {name} data to {parquet_path}")
-            
-            # Save ingestion report
+
             report_path = self.processed_path / "ingestion_report.json"
             with open(report_path, 'w') as f:
                 json.dump(self.ingestion_report, f, indent=2, default=str)
@@ -206,8 +218,7 @@ class DataIngestor:
                 'columns': len(df.columns),
                 'column_names': df.columns.tolist()
             }
-            
-            # Generate statistics for numeric columns
+
             numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
             if numeric_cols:
                 summary['statistics'][name] = {}
@@ -219,15 +230,13 @@ class DataIngestor:
                         'max': float(df[col].max()) if not df[col].isnull().all() else None,
                         'null_count': int(df[col].isnull().sum())
                     }
-            
-            # Check for issues
+
             if df.isnull().sum().sum() > 0:
                 summary['warnings'].append(f"{name} contains missing values")
             
             if len(df) == 0:
                 summary['warnings'].append(f"{name} is empty")
-        
-        # Save summary report
+
         report_path = self.processed_path / "summary_report.json"
         with open(report_path, 'w') as f:
             json.dump(summary, f, indent=2, default=str)
@@ -253,11 +262,9 @@ class DataIngestor:
         start_time = datetime.now()
         
         try:
-            # Step 1: Ingest data
             logger.info("Step 1: Ingesting data...")
             self.ingest_all()
-            
-            # Step 2: Validate data
+
             logger.info("Step 2: Validating data...")
             is_valid = self.validate_ingested_data()
             
@@ -267,26 +274,21 @@ class DataIngestor:
             if validate_only:
                 logger.info("Validation-only mode. Skipping processing.")
                 return self.ingestion_report
-            
-            # Step 3: Backup raw data
+
             if create_backup:
                 logger.info("Step 3: Creating backup...")
                 self.backup_raw_data()
-            
-            # Step 4: Save processed data
+
             logger.info("Step 4: Saving processed data...")
             self.save_processed_data()
-            
-            # Step 5: Generate summary report
+
             logger.info("Step 5: Generating summary report...")
             summary = self.generate_summary_report()
-            
-            # Add to report
+
             self.ingestion_report['summary'] = summary
             self.ingestion_report['duration_seconds'] = (datetime.now() - start_time).total_seconds()
             self.ingestion_report['status'] = 'completed'
-            
-            # Save final report
+
             report_path = self.processed_path / "ingestion_complete_report.json"
             with open(report_path, 'w') as f:
                 json.dump(self.ingestion_report, f, indent=2, default=str)
@@ -302,8 +304,7 @@ class DataIngestor:
             logger.error(f"Data ingestion failed: {e}")
             self.ingestion_report['status'] = 'failed'
             self.ingestion_report['error'] = str(e)
-            
-            # Save error report
+
             report_path = self.processed_path / "ingestion_error_report.json"
             with open(report_path, 'w') as f:
                 json.dump(self.ingestion_report, f, indent=2, default=str)
@@ -357,24 +358,19 @@ Examples:
     args = parser.parse_args()
     
     try:
-        # Load config
         config = Config(args.config)
-        
-        # Override directories if specified
+
         if args.data_dir:
             config.update('data.raw_path', args.data_dir)
         
         if args.output_dir:
             config.update('data.processed_path', args.output_dir)
-        
-        # Set logging level
+
         if args.verbose:
             logger.setLevel(logging.DEBUG)
-        
-        # Initialize ingestor
+
         ingestor = DataIngestor(config)
-        
-        # Check if data files exist
+
         missing_files = []
         required_files = ['train.csv', 'stores.csv', 'features.csv']
         
@@ -393,14 +389,12 @@ Examples:
                 response = input("Continue anyway? (y/n): ")
                 if response.lower() != 'y':
                     return 0
-        
-        # Run ingestion
+
         results = ingestor.run(
             validate_only=args.validate_only,
             create_backup=not args.no_backup
         )
-        
-        # Print summary
+
         print("\n" + "="*60)
         print("DATA INGESTION SUMMARY")
         print("="*60)

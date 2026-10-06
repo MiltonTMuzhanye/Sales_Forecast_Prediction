@@ -1,104 +1,202 @@
-from fastapi import APIRouter, HTTPException, Depends
-from typing import List, Dict
-import numpy as np
-from datetime import datetime
-import pandas as pd
+from __future__ import annotations
+
+from typing import Dict, List
+
+from fastapi import APIRouter, HTTPException
 
 from .schemas import (
-    ForecastRequest, ForecastResponse, 
-    StoreForecastRequest, BatchForecastRequest
+    BatchForecastRequest,
+    ForecastRequest,
+    ForecastResponse,
+    StoreForecastRequest,
 )
+from app.inference.forecast_service import ForecastService
+
 
 router = APIRouter()
 
-# Global models
-models = {}
+_service: ForecastService | None = None
 
-def get_models():
-    """Dependency to get loaded models"""
-    return models
+
+def get_service() -> ForecastService:
+    """Return the shared forecasting service."""
+    global _service
+
+    if _service is None:
+        _service = ForecastService()
+
+    return _service
+
+
+def build_response(result: dict) -> ForecastResponse:
+    """Convert a forecast service result into an API response."""
+
+    return ForecastResponse(
+        store_id=result["store_id"],
+        department_id=result["department_id"],
+        model=result["model"],
+        periods=result["periods"],
+        predictions=result["predictions"],
+        dates=[
+            date[:10] if "T" in date else date
+            for date in result["dates"]
+        ],
+    )
+
 
 @router.post("/forecast", response_model=ForecastResponse)
-async def forecast_single(request: ForecastRequest, models: dict = Depends(get_models)):
-    """Make a single forecast"""
-    try:
-        model_name = request.model or 'prophet'
-        
-        if model_name not in models:
-            raise HTTPException(status_code=404, detail=f"Model {model_name} not found")
-        
-        # For demonstration - in production, use actual model
-        predictions = np.random.normal(30000, 5000, request.periods)
-        dates = pd.date_range(start=datetime.now(), periods=request.periods, freq='W')
-        
-        return {
-            "store_id": request.store_id,
-            "department_id": request.department_id,
-            "model": model_name,
-            "periods": request.periods,
-            "predictions": predictions.tolist(),
-            "dates": dates.strftime('%Y-%m-%d').tolist()
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def forecast_single(
+    request: ForecastRequest,
+) -> ForecastResponse:
+    """Generate a forecast for one Store/Department."""
 
-@router.post("/forecast/store", response_model=List[ForecastResponse])
-async def forecast_store(request: StoreForecastRequest, models: dict = Depends(get_models)):
-    """Make forecasts for all departments in a store"""
     try:
-        departments = [1, 2, 3, 4, 5]  # Example
+        model = request.model or "prophet"
+
+        if model != "prophet":
+            raise ValueError(
+                f"Model '{model}' is not currently available for production inference. "
+                "Use 'prophet'."
+            )
+
+        service = get_service()
+
+        result = service.forecast(
+            store_id=request.store_id,
+            dept_id=request.department_id,
+            periods=request.periods,
+            model=model,
+        )
+
+        return build_response(result)
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Forecast generation failed: {exc}",
+        ) from exc
+
+
+@router.post(
+    "/forecast/store",
+    response_model=List[ForecastResponse],
+)
+async def forecast_store(
+    request: StoreForecastRequest,
+) -> List[ForecastResponse]:
+    """Generate forecasts for all departments in a store."""
+
+    try:
+        service = get_service()
+
+        processed = service.preprocessor.load_and_preprocess()
+
+        store_data = processed[
+            processed["Store"] == request.store_id
+        ]
+
+        if store_data.empty:
+            raise ValueError(
+                f"No data found for Store={request.store_id}"
+            )
+
+        departments = sorted(
+            store_data["Dept"].dropna().unique().tolist()
+        )
+
         results = []
-        
-        for dept in departments:
-            predictions = np.random.normal(30000, 5000, request.periods)
-            dates = pd.date_range(start=datetime.now(), periods=request.periods, freq='W')
-            
-            results.append({
-                "store_id": request.store_id,
-                "department_id": dept,
-                "model": request.model or 'prophet',
-                "periods": request.periods,
-                "predictions": predictions.tolist(),
-                "dates": dates.strftime('%Y-%m-%d').tolist()
-            })
-        
-        return results
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/forecast/batch", response_model=Dict[str, ForecastResponse])
-async def forecast_batch(request: BatchForecastRequest, models: dict = Depends(get_models)):
-    """Make forecasts for multiple stores and departments"""
-    try:
-        results = {}
-        
-        for store_id, depts in request.stores_depts.items():
-            for dept_id in depts:
-                key = f"{store_id}_{dept_id}"
-                
-                predictions = np.random.normal(30000, 5000, request.periods)
-                dates = pd.date_range(start=datetime.now(), periods=request.periods, freq='W')
-                
-                results[key] = {
-                    "store_id": int(store_id),
-                    "department_id": dept_id,
-                    "model": request.model or 'prophet',
-                    "periods": request.periods,
-                    "predictions": predictions.tolist(),
-                    "dates": dates.strftime('%Y-%m-%d').tolist()
-                }
-        
+        for dept_id in departments:
+            result = service.forecast(
+                store_id=request.store_id,
+                dept_id=int(dept_id),
+                periods=request.periods,
+                model=request.model or "prophet",
+            )
+
+            results.append(build_response(result))
+
         return results
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Store forecast failed: {exc}",
+        ) from exc
+
+
+@router.post(
+    "/forecast/batch",
+    response_model=Dict[str, ForecastResponse],
+)
+async def forecast_batch(
+    request: BatchForecastRequest,
+) -> Dict[str, ForecastResponse]:
+    """Generate forecasts for requested Store/Department pairs."""
+
+    try:
+        model = request.model or "prophet"
+
+        if model != "prophet":
+            raise ValueError(
+                f"Model '{model}' is not currently available for production inference. "
+                "Use 'prophet'."
+            )
+
+        service = get_service()
+        results = {}
+
+        for store_id, departments in request.stores_depts.items():
+            for dept_id in departments:
+
+                result = service.forecast(
+                    store_id=int(store_id),
+                    dept_id=int(dept_id),
+                    periods=request.periods,
+                    model=model,
+                )
+
+                key = f"{store_id}_{dept_id}"
+
+                results[key] = build_response(result)
+
+        return results
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Batch forecast failed: {exc}",
+        ) from exc
+
 
 @router.get("/models")
-async def list_models(models: dict = Depends(get_models)):
-    """List available models"""
+async def list_models() -> dict:
+    """List models currently available for production inference."""
+
     return {
-        "available_models": list(models.keys()),
-        "timestamp": datetime.now().isoformat()
+        "available_models": ["prophet"],
+        "training_models": [
+            "prophet",
+            "xgboost",
+            "lightgbm",
+            "hybrid",
+        ],
     }

@@ -1,0 +1,27 @@
+services:
+
+  api:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.api
+    container_name: sales-forecast-api
+    ports:
+      - "8001:8001"
+    environment:
+      PORT: "8001"
+      PYTHONPATH: /app
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.streamlit
+    container_name: sales-forecast-frontend
+    ports:
+      - "8502:8502"
+    environment:
+      API_URL: http://api:8001
+      PYTHONPATH: /app
+    depends_on:
+      - api
+    restart: unless-stopped

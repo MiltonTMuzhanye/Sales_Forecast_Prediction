@@ -13,25 +13,21 @@ class Config:
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from YAML files"""
         config = {}
-        
-        # Load main config
+
         if self.config_path.exists():
             with open(self.config_path, 'r') as f:
                 config.update(yaml.safe_load(f))
-        
-        # Load model config
+
         model_config_path = Path("configs/model.yaml")
         if model_config_path.exists():
             with open(model_config_path, 'r') as f:
                 config['model'] = yaml.safe_load(f)
-        
-        # Load data config
+
         data_config_path = Path("configs/data.yaml")
         if data_config_path.exists():
             with open(data_config_path, 'r') as f:
                 config['data'] = yaml.safe_load(f)
-        
-        # Load forecast config
+
         forecast_config_path = Path("configs/forecast_config.yaml")
         if forecast_config_path.exists():
             with open(forecast_config_path, 'r') as f:

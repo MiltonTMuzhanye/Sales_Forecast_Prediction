@@ -28,8 +28,7 @@ class BatchForecastingPipeline:
                           periods: int = 12, model_name: str = 'prophet') -> Dict:
         """Run batch forecast for all stores and departments"""
         logger.info("Starting batch forecast...")
-        
-        # Load data
+
         from ..data.ingestion import DataIngestion
         from ..data.preprocessing import DataPreprocessor
         
@@ -40,15 +39,12 @@ class BatchForecastingPipeline:
         processed_data = preprocessor.preprocess_all(
             data['train'], data['stores'], data['features']
         )
-        
-        # Get store-department combinations
+
         if stores_depts is None:
             stores_depts = self.get_stores_departments(processed_data)
-        
-        # Load models once
+
         self.pipeline.load_models()
-        
-        # Generate forecasts
+
         all_results = {}
         total = sum(len(depts) for depts in stores_depts.values())
         count = 0
@@ -65,8 +61,7 @@ class BatchForecastingPipeline:
                 except Exception as e:
                     logger.error(f"Failed: Store {store_id}, Dept {dept_id}: {e}")
                     all_results[f"{store_id}_{dept_id}"] = {'error': str(e)}
-        
-        # Save summary
+
         self.save_batch_summary(all_results)
         
         logger.info(f"Batch forecast completed. {len(all_results)} forecasts generated.")
@@ -76,8 +71,7 @@ class BatchForecastingPipeline:
         """Save batch forecast summary"""
         output_path = Path(self.config.get('forecast.output_path', 'reports/forecasts/'))
         output_path.mkdir(parents=True, exist_ok=True)
-        
-        # Create summary
+
         summary_data = []
         for key, result in results.items():
             if 'error' in result:
@@ -92,8 +86,7 @@ class BatchForecastingPipeline:
             })
         
         df = pd.DataFrame(summary_data)
-        
-        # Save
+
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         df.to_csv(output_path / f'batch_summary_{timestamp}.csv', index=False)
         

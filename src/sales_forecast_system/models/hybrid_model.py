@@ -79,7 +79,6 @@ class HybridModel:
 
         working_df = df.copy()
 
-        # Ensure chronological ordering.
         working_df[date_col] = pd.to_datetime(
             working_df[date_col]
         )
@@ -87,13 +86,10 @@ class HybridModel:
             date_col
         ).reset_index(drop=True)
 
-        # Generate the same engineered features used by the
-        # tree-based forecasting models.
         working_df = self.feature_engineer.engineer_all_features(
             working_df
         )
 
-        # Generate Prophet's fitted values for every historical row.
         prophet_fitted = self._get_prophet_fitted_values(
             working_df,
             date_col,
@@ -108,20 +104,12 @@ class HybridModel:
 
         working_df['prophet_prediction'] = prophet_fitted
 
-        # Residual = actual - Prophet prediction.
         working_df['residual'] = (
             working_df[target_col]
             - working_df['prophet_prediction']
         )
 
-        # IMPORTANT:
-        # Weekly_Sales must not be supplied to the residual model.
-        #
-        # The residual model can use:
-        # - historical/engineered explanatory features
-        # - Prophet's prediction
-        #
-        # It must NOT use the actual target.
+
         return working_df
 
     def train(
@@ -167,9 +155,7 @@ class HybridModel:
                 date_col
             ).reset_index(drop=True)
 
-            # ---------------------------------------------------------
-            # STEP 1: Train Prophet
-            # ---------------------------------------------------------
+
             logger.info(
                 "Step 1/2: Training Prophet model..."
             )
@@ -207,9 +193,7 @@ class HybridModel:
                 "Prophet model trained successfully."
             )
 
-            # ---------------------------------------------------------
-            # STEP 2: Build residual model
-            # ---------------------------------------------------------
+
             logger.info(
                 "Step 2/2: Training ML residual model..."
             )
@@ -236,13 +220,7 @@ class HybridModel:
                     self.config
                 )
 
-            # Train against residual.
-            #
-            # The updated XGBoost/LightGBM wrappers accept
-            # target_col explicitly and use chronological splitting.
-            #
-            # Remove the actual target from the feature set by
-            # creating a training dataframe without it.
+
             ml_training_data = ml_data.drop(
                 columns=[target_col]
             )
@@ -282,14 +260,9 @@ class HybridModel:
 
         future_df[date_col] = future_dates
 
-        # Future holiday indicator cannot be inferred from the
-        # last historical row. Default to 0 unless the dataset
-        # explicitly supplies a future holiday schedule.
         if 'IsHoliday' in future_df.columns:
             future_df['IsHoliday'] = 0
 
-        # Generate calendar and engineered features using
-        # the same feature engineering pipeline used during training.
         future_df = self.feature_engineer.engineer_all_features(
             future_df
         )
@@ -345,9 +318,7 @@ class HybridModel:
                 freq='7D',
             )
 
-            # ---------------------------------------------------------
-            # Prophet forecast
-            # ---------------------------------------------------------
+
             prophet_forecast = self.prophet_model.predict(
                 periods=periods
             )
@@ -363,16 +334,12 @@ class HybridModel:
                     "match requested forecast periods."
                 )
 
-            # ---------------------------------------------------------
-            # ML residual forecast
-            # ---------------------------------------------------------
+
             future_df = self._create_future_features(
                 working_df,
                 future_dates,
             )
 
-            # Prophet prediction becomes an input feature
-            # for the residual model.
             future_df['prophet_prediction'] = (
                 prophet_predictions
             )
@@ -387,9 +354,6 @@ class HybridModel:
                     "match requested forecast periods."
                 )
 
-            # ---------------------------------------------------------
-            # Final hybrid forecast
-            # ---------------------------------------------------------
             final_predictions = (
                 prophet_predictions
                 + residual_predictions

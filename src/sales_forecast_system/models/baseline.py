@@ -51,20 +51,16 @@ class BaselineModels:
         """Evaluate all baseline models"""
         test_size = len(test_data)
         results = {}
-        
-        # Naive
+
         naive_pred = self.naive_forecast(train_data, test_size)
         results['Naive'] = self._calculate_metrics(test_data.values, naive_pred)
-        
-        # Seasonal Naive
+
         seasonal_naive_pred = self.seasonal_naive_forecast(train_data, test_size)
         results['Seasonal_Naive'] = self._calculate_metrics(test_data.values, seasonal_naive_pred)
-        
-        # Moving Average
+
         ma_pred = self.moving_average_forecast(train_data, test_size)
         results['Moving_Average'] = self._calculate_metrics(test_data.values, ma_pred)
-        
-        # Exponential Smoothing
+
         es_pred = self.exponential_smoothing_forecast(train_data, test_size)
         results['Exponential_Smoothing'] = self._calculate_metrics(test_data.values, es_pred)
         

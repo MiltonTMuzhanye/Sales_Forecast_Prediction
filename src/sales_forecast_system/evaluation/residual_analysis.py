@@ -42,8 +42,7 @@ class ResidualAnalyzer:
                 '95%': np.percentile(percent_residuals, 95)
             }
         }
-        
-        # Normality test
+
         if len(residuals) > 8:
             shapiro_stat, shapiro_p = stats.shapiro(residuals)
             analysis['normality_test'] = {
@@ -61,29 +60,25 @@ class ResidualAnalyzer:
                               percent_residuals: np.ndarray) -> None:
         """Generate residual analysis plots"""
         fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-        
-        # Residuals vs Fitted
+
         axes[0, 0].scatter(y_true, residuals, alpha=0.5)
         axes[0, 0].axhline(y=0, color='r', linestyle='--')
         axes[0, 0].set_xlabel('Fitted Values')
         axes[0, 0].set_ylabel('Residuals')
         axes[0, 0].set_title('Residuals vs Fitted Values')
         axes[0, 0].grid(True, alpha=0.3)
-        
-        # Q-Q Plot
+
         stats.probplot(residuals, dist="norm", plot=axes[0, 1])
         axes[0, 1].set_title('Q-Q Plot')
         axes[0, 1].grid(True, alpha=0.3)
-        
-        # Residual Distribution
+
         axes[1, 0].hist(residuals, bins=30, edgecolor='black', alpha=0.7)
         axes[1, 0].axvline(x=0, color='r', linestyle='--')
         axes[1, 0].set_xlabel('Residuals')
         axes[1, 0].set_ylabel('Frequency')
         axes[1, 0].set_title('Residual Distribution')
         axes[1, 0].grid(True, alpha=0.3)
-        
-        # Percentage Error Distribution
+
         axes[1, 1].hist(percent_residuals, bins=30, edgecolor='black', alpha=0.7)
         axes[1, 1].axvline(x=0, color='r', linestyle='--')
         axes[1, 1].set_xlabel('Percentage Error (%)')

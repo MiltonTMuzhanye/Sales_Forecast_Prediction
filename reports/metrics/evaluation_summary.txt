@@ -1,0 +1,14 @@
+SALES FORECASTING MODEL EVALUATION
+============================================================
+
+Best model by RMSE: prophet
+
+Model comparison:
+------------------------------------------------------------
+prophet      RMSE=5813.73  MAE=3745.95  MAPE=21.02%  sMAPE=16.97%  R2=-1.0935
+xgboost      RMSE=18366.79  MAE=18009.87  MAPE=100.37%  sMAPE=65.52%  R2=-19.8948
+lightgbm     RMSE=15647.57  MAE=15221.99  MAPE=85.92%  sMAPE=58.83%  R2=-14.1658
+hybrid       RMSE=17197.99  MAE=16274.36  MAPE=89.28%  sMAPE=60.18%  R2=-17.3200
+
+Evaluation scope: Store 1 / Department 1
+Metrics are calculated on the held-out test period.

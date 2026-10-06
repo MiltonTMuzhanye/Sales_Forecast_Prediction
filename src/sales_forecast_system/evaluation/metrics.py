@@ -61,7 +61,6 @@ class ModelEvaluator:
             ),
         }
 
-        # R²
         ss_res = np.sum((y_true - y_pred) ** 2)
         ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
 

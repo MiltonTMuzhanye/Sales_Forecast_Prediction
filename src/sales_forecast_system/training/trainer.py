@@ -33,38 +33,31 @@ class ModelTrainer:
     def train_prophet(self, data: pd.DataFrame, store_id: int, dept_id: int) -> Dict:
         """Train Prophet model"""
         logger.info(f"Training Prophet for Store {store_id}, Dept {dept_id}")
-        
-        # Filter data
+
         store_dept_data = data[(data['Store'] == store_id) & (data['Dept'] == dept_id)].copy()
         store_dept_data = store_dept_data.sort_values('Date')
-        
-        # Prepare data
+
         prophet_data = store_dept_data[['Date', 'Weekly_Sales']].copy()
         prophet_data.columns = ['ds', 'y']
-        
-        # Create holidays
+
         if 'IsHoliday' in store_dept_data.columns:
             holidays_df = store_dept_data[store_dept_data['IsHoliday'] == 1][['Date']].copy()
             holidays_df.columns = ['ds']
             holidays_df['holiday'] = 'store_holiday'
         else:
             holidays_df = None
-        
-        # Split data
+
         train_size = int(len(prophet_data) * 0.8)
         train_data = prophet_data.iloc[:train_size]
         test_data = prophet_data.iloc[train_size:]
-        
-        # Train model
+
         model = ProphetModel(self.config)
         model.train(train_data, holidays_df)
-        
-        # Predict
+
         predictions = model.predict(len(test_data))
         y_pred = predictions['yhat'].values
         y_true = test_data['y'].values
-        
-        # Evaluate
+
         metrics = model.evaluate(y_true, y_pred)
         
         return {
@@ -122,8 +115,6 @@ class ModelTrainer:
                 [future_row.to_dict()]
             )
 
-            # The future target is unknown. Remove it before feature
-            # construction so it cannot become a model input.
             future_row_df[self.feature_engineer.target_col] = np.nan
 
             combined = pd.concat(
@@ -145,9 +136,6 @@ class ModelTrainer:
 
             predictions.append(prediction)
 
-            # Add the prediction to the historical target series.
-            # This prediction becomes available history for the next
-            # recursive forecasting step.
             future_row_with_prediction = future_row.copy()
             future_row_with_prediction[
                 self.feature_engineer.target_col
@@ -205,14 +193,11 @@ class ModelTrainer:
             f"train={len(train_raw)}, test={len(test_data)}"
         )
 
-        # Create target-history features using training history only.
         train_features = self.feature_engineer.engineer_all_features(
             train_raw,
             include_target_history=True
         )
 
-        # Rows before the maximum required lag cannot contain a complete
-        # set of lag features. Remove them from model training only.
         lag_columns = [
             f"lag_{lag}"
             for lag in self.feature_engineer.lags
@@ -236,8 +221,6 @@ class ModelTrainer:
         model = XGBoostModel(self.config)
         model.train(train_features)
 
-        # Recursive forecasting starts from the complete raw training
-        # history, not the lag-filtered training dataframe.
         y_pred = self._recursive_forecast_tree_model(
             model=model,
             history=train_raw,
@@ -289,7 +272,6 @@ class ModelTrainer:
             f"train={len(train_raw)}, test={len(test_data)}"
         )
 
-        # Create target-history features using training history only.
         train_features = self.feature_engineer.engineer_all_features(
             train_raw,
             include_target_history=True
@@ -318,8 +300,6 @@ class ModelTrainer:
         model = LightGBMModel(self.config)
         model.train(train_features)
 
-        # Forecast recursively so each prediction becomes available
-        # history for the next forecasting step.
         y_pred = self._recursive_forecast_tree_model(
             model=model,
             history=train_raw,
@@ -343,27 +323,21 @@ class ModelTrainer:
         logger.info(f"Training all models for Store {store_id}, Dept {dept_id}")
         
         results = {}
-        
-        # Train Prophet
+
         results['prophet'] = self.train_prophet(data, store_id, dept_id)
-        
-        # Train XGBoost
+
         results['xgboost'] = self.train_xgboost(data, store_id, dept_id)
-        
-        # Train LightGBM
+
         results['lightgbm'] = self.train_lightgbm(data, store_id, dept_id)
-        
-        # Train Hybrid
+
         try:
             store_dept_data = data[
                 (data['Store'] == store_id) &
                 (data['Dept'] == dept_id)
             ].copy()
 
-            # Ensure chronological ordering for time-series forecasting.
             store_dept_data = store_dept_data.sort_values('Date').reset_index(drop=True)
 
-            # Use the same chronological 80/20 split as the other models.
             train_size = int(len(store_dept_data) * 0.8)
 
             train_data = store_dept_data.iloc[:train_size].copy()
@@ -371,10 +345,8 @@ class ModelTrainer:
 
             hybrid = HybridModel(self.config)
 
-            # Train only on historical training data.
             hybrid.train(train_data)
 
-            # Forecast exactly the length of the held-out test period.
             y_pred = hybrid.predict(
                 train_data,
                 periods=len(test_data)
@@ -392,8 +364,7 @@ class ModelTrainer:
 
         except Exception as e:
             logger.warning(f"Hybrid model failed: {e}")
-        
-        # Compare models using the same chronological test period.
+
         predictions = {}
 
         for name, result in results.items():
@@ -411,8 +382,6 @@ class ModelTrainer:
                 results['prophet']['test_data']['y'].values
             ).flatten()
 
-            # Only compare models whose predictions have the same
-            # number of observations as the common test set.
             valid_predictions = {}
 
             for model_name, y_pred in predictions.items():
@@ -451,7 +420,6 @@ class ModelTrainer:
         for model_name, result in self.results.items():
             if 'model' in result and hasattr(result['model'], 'save_model'):
                 result['model'].save_model(f"{base_path}/{model_name}_model.pkl")
-        
-        # Save results
+
         joblib.dump(self.results, f"{base_path}/training_results.pkl")
         logger.info("All models saved")

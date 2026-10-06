@@ -60,13 +60,11 @@ class DataValidator:
         """Validate sales values are reasonable"""
         if sales_col not in df.columns:
             return True
-        
-        # Check for negative sales
+
         neg_sales = df[df[sales_col] < 0]
         if not neg_sales.empty:
             logger.warning(f"Found {len(neg_sales)} rows with negative sales")
-        
-        # Check for zero sales
+
         zero_sales = df[df[sales_col] == 0]
         if not zero_sales.empty:
             logger.warning(f"Found {len(zero_sales)} rows with zero sales")

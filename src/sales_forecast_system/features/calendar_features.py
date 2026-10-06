@@ -18,16 +18,13 @@ class CalendarFeatureCreator:
         """Create cyclical encoding for time-based features"""
         logger.info("Creating cyclical features")
         df_copy = df.copy()
-        
-        # Month cyclical encoding
+
         df_copy['month_sin'] = np.sin(2 * np.pi * df_copy['Month'] / 12)
         df_copy['month_cos'] = np.cos(2 * np.pi * df_copy['Month'] / 12)
-        
-        # Day of week cyclical encoding
+
         df_copy['dayofweek_sin'] = np.sin(2 * np.pi * df_copy['DayOfWeek'] / 7)
         df_copy['dayofweek_cos'] = np.cos(2 * np.pi * df_copy['DayOfWeek'] / 7)
-        
-        # Quarter cyclical encoding
+
         df_copy['quarter_sin'] = np.sin(2 * np.pi * df_copy['Quarter'] / 4)
         df_copy['quarter_cos'] = np.cos(2 * np.pi * df_copy['Quarter'] / 4)
         
@@ -40,13 +37,11 @@ class CalendarFeatureCreator:
         df_copy = df.copy()
         
         t = np.arange(len(df_copy))
-        
-        # Annual seasonality (52 weeks)
+
         for k in range(1, harmonics + 1):
             df_copy[f'sin_annual_{k}'] = np.sin(2 * np.pi * k * t / 52)
             df_copy[f'cos_annual_{k}'] = np.cos(2 * np.pi * k * t / 52)
-        
-        # Quarterly seasonality (13 weeks)
+
         for k in range(1, harmonics):
             df_copy[f'sin_quarterly_{k}'] = np.sin(2 * np.pi * k * t / 13)
             df_copy[f'cos_quarterly_{k}'] = np.cos(2 * np.pi * k * t / 13)

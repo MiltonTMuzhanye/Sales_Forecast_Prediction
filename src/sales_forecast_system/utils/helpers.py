@@ -29,8 +29,7 @@ def calculate_seasonal_indices(data: pd.Series, period: int = 52) -> np.ndarray:
     """Calculate seasonal indices"""
     if len(data) < period:
         return np.ones(period)
-    
-    # Reshape data into seasonal periods
+
     n_periods = len(data) // period
     if n_periods < 1:
         return np.ones(period)
